@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DepsUpdater": {
+      "commandName": "Project",
+      "workingDirectory": "E:\\sources\\Meziantou.Framework"
+    }
+  }
+}
