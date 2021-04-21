@@ -19,11 +19,16 @@ namespace DepsUpdater
     {
         private static readonly HttpClient s_httpClient = new();
 
-        private static async Task Main()
+        private static async Task Main(string[] args)
         {
             var cancellationTokenSource = new CancellationTokenSource();
             Console.CancelKeyPress += (_, _) => cancellationTokenSource.Cancel();
             var directory = Environment.CurrentDirectory;
+            if (args.Length > 0 && !string.IsNullOrEmpty(args[0]))
+            {
+                directory = args[0];
+            }
+
             var options = new ScannerOptions()
             {
                 RecurseSubdirectories = true,
