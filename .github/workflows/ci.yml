@@ -1,0 +1,71 @@
+name: publish
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    branches:
+      - '*'
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+  NuGetDirectory: ${{ github.workspace}}/nuget
+  NuGetSource: "https://api.nuget.org/v3/index.json"
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  create_nuget:
+    runs-on: windows-2019
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core (global.json)
+      uses: actions/setup-dotnet@v1
+    - run: dotnet pack --configuration Release --output ${{ env.NuGetDirectory }} /bl
+    - uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: nuget
+        if-no-files-found: error
+        retention-days: 3
+        path: ${{ env.NuGetDirectory }}/**/*
+    - uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: binlog
+        if-no-files-found: error
+        retention-days: 3
+        path: '**/*.binlog'
+
+  deploy:
+    runs-on: 'ubuntu-20.04'
+    needs: [ create_nuget ]
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: nuget
+        path: ${{ env.NuGetDirectory }}
+    - name: Setup .NET Core (global.json)
+      uses: actions/setup-dotnet@v1
+    - run: |
+        Write-Host "Current ref: $env:GITHUB_REF"
+        Write-Host "Searching nupkg in folder: ${{ env.NuGetDirectory }}"
+        $files = Get-ChildItem "${{ env.NuGetDirectory }}/*" -Include *.nupkg
+        foreach($file in $files) {
+            Write-Host "Pushing NuGet package: $($file.FullName)"
+            if ($env:GITHUB_REF -eq 'refs/heads/main')
+            {
+              & dotnet nuget push "$($file.FullName)" --api-key "$env:NuGetApiKey" --source ${{ env.NuGetSource }} --force-english-output --skip-duplicate
+            }
+            else
+            {
+              Write-Host "Not on the default branch => Do not push"
+            }
+        }
+      name: Publish NuGet packages
+      if: always()
+      env:
+        NuGetApiKey: ${{ secrets.NuGetApiKey }}
