@@ -83,15 +83,6 @@ namespace DepsUpdater
                 RecurseSubdirectories = true,
                 ShouldScanFilePredicate = (ref FileSystemEntry entry) => globs.IsMatch(ref entry),
                 ShouldRecursePredicate = (ref FileSystemEntry entry) => globs.IsPartialMatch(ref entry),
-                Scanners = new DependencyScanner[]
-                {
-                    new Meziantou.Framework.DependencyScanning.Scanners.DotNetGlobalJsonDependencyScanner(),
-                    new Meziantou.Framework.DependencyScanning.Scanners.MsBuildReferencesDependencyScanner(),
-                    new Meziantou.Framework.DependencyScanning.Scanners.NuSpecDependencyScanner(),
-                    new Meziantou.Framework.DependencyScanning.Scanners.PackagesConfigDependencyScanner(),
-                    new Meziantou.Framework.DependencyScanning.Scanners.ProjectJsonDependencyScanner(),
-                    new Meziantou.Framework.DependencyScanning.Scanners.NpmPackageJsonDependencyScanner(),
-                },
             };
 
             var dependencies = await DependencyScanner.ScanDirectoryAsync(directory, options, cancellationTokenSource.Token).ToListAsync();

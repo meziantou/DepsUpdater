@@ -4,14 +4,14 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>depsupdater</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Meziantou.Framework" Version="3.0.9" />
-    <PackageReference Include="Meziantou.Framework.DependencyScanning" Version="1.0.0-alpha.4" />
+    <PackageReference Include="Meziantou.Framework.DependencyScanning" Version="1.0.0-alpha.5" />
     <PackageReference Include="Meziantou.Framework.Globbing" Version="1.0.7" />
     <PackageReference Include="NuGet.Protocol" Version="5.9.1" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21216.1" />
