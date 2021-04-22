@@ -87,34 +87,45 @@ namespace DepsUpdater
 
             var dependencies = await DependencyScanner.ScanDirectoryAsync(directory, options, cancellationTokenSource.Token).ToListAsync();
             Console.WriteLine($"{dependencies.Count} dependencies found");
+            foreach (var dependency in dependencies.OrderBy(dep => dep.Type).ThenBy(dep => dep.Name).ThenBy(dep => dep.Version))
+            {
+                Console.WriteLine("- " + dependency);
+            }
+
             foreach (var dependency in dependencies.Where(d => d.Location.IsUpdatable))
             {
                 if (dependencyTypes.Length > 0 && !dependencyTypes.Contains(dependency.Type))
                     continue;
 
+                string? updatedVersion = null;
                 if (dependency.Type == DependencyType.NuGet)
                 {
-                    await UpdateNuGetDependencyAsync(dependency, cancellationTokenSource.Token);
+                    updatedVersion = await UpdateNuGetDependencyAsync(dependency, cancellationTokenSource.Token);
                 }
                 else if (dependency.Type == DependencyType.DotNetSdk)
                 {
-                    await UpdateDotNetSDKDependencyAsync(dependency, cancellationTokenSource.Token);
+                    updatedVersion = await UpdateDotNetSDKDependencyAsync(dependency, cancellationTokenSource.Token);
                 }
                 else if (dependency.Type == DependencyType.Npm)
                 {
-                    await UpdateNpmDependencyAsync(dependency, cancellationTokenSource.Token);
+                    updatedVersion = await UpdateNpmDependencyAsync(dependency, cancellationTokenSource.Token);
+                }
+
+                if (updatedVersion != null)
+                {
+                    Console.WriteLine($"Updated {dependency} -> {updatedVersion}");
                 }
             }
             return 0;
         }
 
-        private static async Task UpdateNuGetDependencyAsync(Dependency dependency, CancellationToken cancellationToken)
+        private static async Task<string?> UpdateNuGetDependencyAsync(Dependency dependency, CancellationToken cancellationToken)
         {
             if (!NuGetVersion.TryParse(dependency.Version, out var currentVersion))
-                return;
+                return null;
 
             // https://github.com/NuGet/Samples/tree/main/NuGetProtocolSamples
-            var cache = new SourceCacheContext();
+            var cache = new SourceCacheContext() { NoCache = true };
             var repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
             var resource = await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
             var versions = await resource.GetAllVersionsAsync(
@@ -148,15 +159,16 @@ namespace DepsUpdater
 
             var latestVersion = versions.Where(ConsiderVersion).DefaultIfEmpty().Max();
             if (latestVersion == null)
-                return;
+                return null;
 
             await dependency.UpdateAsync(latestVersion.ToString(), cancellationToken);
+            return latestVersion.ToString();
         }
 
-        private static async Task UpdateDotNetSDKDependencyAsync(Dependency dependency, CancellationToken cancellationToken)
+        private static async Task<string?> UpdateDotNetSDKDependencyAsync(Dependency dependency, CancellationToken cancellationToken)
         {
             if (!SemanticVersion.TryParse(dependency.Version, out var currentVersion))
-                return;
+                return null;
 
             bool ConsiderVersion(SemanticVersion version)
             {
@@ -186,12 +198,13 @@ namespace DepsUpdater
 
             var latestVersion = versions.Where(ConsiderVersion).DefaultIfEmpty().Max();
             if (latestVersion == null)
-                return;
+                return null;
 
             await dependency.UpdateAsync(latestVersion.ToString(), cancellationToken);
+            return latestVersion.ToString();
         }
 
-        private static async Task UpdateNpmDependencyAsync(Dependency dependency, CancellationToken cancellationToken)
+        private static async Task<string?> UpdateNpmDependencyAsync(Dependency dependency, CancellationToken cancellationToken)
         {
             var version = dependency.Version;
             if (version.Length > 0 && version[0] is '~' or '^')
@@ -200,7 +213,7 @@ namespace DepsUpdater
             }
 
             if (!SemanticVersion.TryParse(version, out var currentVersion))
-                return;
+                return null;
 
             bool ConsiderVersion(SemanticVersion version)
             {
@@ -230,9 +243,10 @@ namespace DepsUpdater
 
             var latestVersion = versions.Where(ConsiderVersion).DefaultIfEmpty().Max();
             if (latestVersion == null)
-                return;
+                return null;
 
             await dependency.UpdateAsync(latestVersion.ToString(), cancellationToken);
+            return latestVersion.ToString();
         }
 
         private sealed class NpmPackageInfo
