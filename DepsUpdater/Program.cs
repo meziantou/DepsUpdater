@@ -127,12 +127,9 @@ namespace DepsUpdater
             // https://github.com/NuGet/Samples/tree/main/NuGetProtocolSamples
             var cache = new SourceCacheContext() { NoCache = true };
             var repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
-            var resource = await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
-            var versions = await resource.GetAllVersionsAsync(
-                dependency.Name,
-                cache,
-                logger: NullLogger.Instance,
-                cancellationToken);
+
+            var metadataResource = await repository.GetResourceAsync<PackageMetadataResource>(cancellationToken);
+            var versions = await metadataResource.GetMetadataAsync(dependency.Name, includePrerelease: currentVersion.IsPrerelease, includeUnlisted: false, cache, NullLogger.Instance, cancellationToken);
 
             bool ConsiderVersion(NuGetVersion version)
             {
@@ -157,7 +154,7 @@ namespace DepsUpdater
                 return true;
             }
 
-            var latestVersion = versions.Where(ConsiderVersion).DefaultIfEmpty().Max();
+            var latestVersion = versions.Select(package => package.Identity.Version).Where(ConsiderVersion).DefaultIfEmpty().Max();
             if (latestVersion == null)
                 return null;
 
