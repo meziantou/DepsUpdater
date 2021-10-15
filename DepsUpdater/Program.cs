@@ -47,7 +47,7 @@ namespace DepsUpdater
                 new Option<string>(
                     "--dependency-type",
                     arity: ArgumentArity.ZeroOrMore,
-                    description: "NuGet, npm"),
+                    description: string.Join(", ", new []{ nameof(DependencyType.NuGet), nameof(DependencyType.DotNetSdk), nameof(DependencyType.Npm) })),
             };
 
             replaceValueCommand.Description = "Update dependencies";
@@ -68,8 +68,8 @@ namespace DepsUpdater
                 globs = new(Glob.Parse("**/*", GlobOptions.None), Glob.Parse("!**/node_modules/**/*", GlobOptions.None));
             }
 
-            var dependencyTypes = dependencyType.WhereNotNull().Select(Enum.Parse<DependencyType>).ToArray();
-
+            var dependencyTypes = dependencyType.WhereNotNull().SelectMany(value => value.Split(new char[] { ',', ';', ' ' })).Select(Enum.Parse<DependencyType>).ToArray();
+            
             var cancellationTokenSource = new CancellationTokenSource();
             Console.CancelKeyPress += (_, _) => cancellationTokenSource.Cancel();
 
