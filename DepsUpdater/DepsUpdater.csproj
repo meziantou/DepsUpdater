@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Meziantou.Framework" Version="3.0.9" />
+    <PackageReference Include="Meziantou.Framework" Version="3.0.18" />
     <PackageReference Include="Meziantou.Framework.DependencyScanning" Version="1.0.0-alpha.5" />
     <PackageReference Include="Meziantou.Framework.Globbing" Version="1.0.7" />
     <PackageReference Include="NuGet.Protocol" Version="5.10.0" />
