@@ -69,7 +69,17 @@ namespace DepsUpdater
             }
 
             var dependencyTypes = dependencyType.WhereNotNull().SelectMany(value => value.Split(new char[] { ',', ';', ' ' })).Select(Enum.Parse<DependencyType>).ToArray();
-            
+            if (dependencyTypes.Length > 0)
+            {
+                Console.WriteLine("Updating: " + string.Join(",", dependencyTypes));
+            }
+
+            Console.WriteLine("Searching in:");
+            foreach (var glob in globs)
+            {
+                Console.WriteLine("- " + glob.ToString());
+            }
+
             var cancellationTokenSource = new CancellationTokenSource();
             Console.CancelKeyPress += (_, _) => cancellationTokenSource.Cancel();
 
