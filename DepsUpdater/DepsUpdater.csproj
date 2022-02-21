@@ -13,7 +13,7 @@
     <PackageReference Include="Meziantou.Framework" Version="3.0.19" />
     <PackageReference Include="Meziantou.Framework.DependencyScanning" Version="1.0.0-alpha.7" />
     <PackageReference Include="Meziantou.Framework.Globbing" Version="1.0.11" />
-    <PackageReference Include="NuGet.Protocol" Version="6.0.0" />
+    <PackageReference Include="NuGet.Protocol" Version="6.1.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21216.1" />
   </ItemGroup>
 
