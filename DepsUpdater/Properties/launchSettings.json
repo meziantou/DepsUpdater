@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "DepsUpdater": {
+      "commandName": "Project",
+      "commandLineArgs": "update --dependency-type Npm",
+      "workingDirectory": "C:\\Users\\mezia\\source\\repos\\meziantou.site"
+    }
+  }
+}
