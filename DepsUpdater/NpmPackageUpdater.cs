@@ -1,0 +1,226 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
+using Meziantou.Framework;
+using Meziantou.Framework.DependencyScanning;
+using NuGet.Versioning;
+
+namespace DepsUpdater;
+
+internal sealed class NpmPackageUpdater : PackageUpdater
+{
+    private static readonly HttpClient s_httpClient = new();
+    private static readonly Uri s_registryUri = new("https://registry.npmjs.org");
+    private static readonly JsonSerializerOptions s_defaultJsonOptions = new() { Converters = { new NpmPackageRepositoryJsonConverter() } };
+
+    protected override bool IsSupported(Dependency dependency) => dependency.Type is DependencyType.Npm;
+
+    protected override SemanticVersion? ParseVersion(string? value)
+    {
+        if (value is null)
+            return null;
+
+        if (value.Length > 0 && value[0] is '~' or '^')
+        {
+            value = value[1..];
+        }
+
+        return base.ParseVersion(value);
+    }
+
+    public override async IAsyncEnumerable<string> GetVersionsAsync(string packageName, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var packageUri = new Uri(s_registryUri, packageName);
+        using var packageResponse = await s_httpClient.GetAsync(packageUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (packageResponse.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.BadRequest)
+            yield break;
+
+        packageResponse.EnsureSuccessStatusCode();
+        var package = await packageResponse.Content.ReadFromJsonAsync<NpmPackage>(options: s_defaultJsonOptions, cancellationToken);
+        if (package is null)
+            yield break;
+
+        foreach (var version in package.Versions)
+            yield return version.Key;
+    }
+
+    public override async Task UpdateLockFileAsync(FullPath rootDirectory, IEnumerable<Dependency> updatedDependencies, CancellationToken cancellationToken)
+    {
+        var files = updatedDependencies
+            .Where(dep => dep.Type == DependencyType.Npm)
+            .Select(dep => FullPath.FromPath(dep.Location.FilePath))
+            .Distinct()
+            .ToArray();
+
+        foreach (var file in files)
+        {
+            var lockFile = TryFindLockFile(file.Parent, "package-lock.json");
+            if (!lockFile.IsEmpty)
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = OperatingSystem.IsWindows() ? @"C:\Program Files\nodejs\npm.cmd" : "npm",
+                    WorkingDirectory = file.Parent,
+                    ArgumentList =
+                    {
+                        "install",
+                        "--no-audit",
+                        "--force",
+                    },
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                };
+                var result = await psi.RunAsTaskAsync(cancellationToken);
+                if (result.ExitCode != 0)
+                {
+                    Console.WriteLine($"Unable to update lock file '{lockFile}':\n{result.Output}");
+                }
+            }
+        }
+    }
+
+    private static FullPath TryFindLockFile(FullPath currentDirectory, string fileName)
+    {
+        while (!currentDirectory.IsEmpty)
+        {
+            var filePath = currentDirectory / fileName;
+            if (File.Exists(filePath))
+                return filePath;
+
+            currentDirectory = currentDirectory.Parent;
+        }
+
+        return FullPath.Empty;
+    }
+
+    private sealed class NpmPackage
+    {
+        [JsonPropertyName("_id")]
+        public string Id { get; set; } = null!;
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = null!;
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("dist-tags")]
+        public IDictionary<string, string> DistTags { get; set; } = null!;
+
+        [JsonPropertyName("readme")]
+        public string? Readme { get; set; }
+
+        [JsonPropertyName("homepage")]
+        public string? Homepage { get; set; }
+
+        [JsonPropertyName("repository")]
+        public NpmPackageRepository[]? Repository { get; set; }
+
+        [JsonPropertyName("versions")]
+        public IReadOnlyDictionary<string, NpmPackageVersion> Versions { get; set; } = null!;
+
+        public override string ToString()
+        {
+            return Id;
+        }
+    }
+
+    private sealed class NpmPackageVersion
+    {
+        [JsonPropertyName("_id")]
+        public string Id { get; set; } = null!;
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = null!;
+
+        [JsonPropertyName("version")]
+        public string Version { get; set; } = null!;
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("repository")]
+        public NpmPackageRepository[]? Repository { get; set; }
+
+        public override string ToString()
+        {
+            return Id;
+        }
+    }
+
+    private sealed class NpmPackageRepository
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = null!;
+
+        [JsonPropertyName("url")]
+        public string Url { get; set; } = null!;
+    }
+
+    private sealed class NpmPackageRepositoryJsonConverter : JsonConverter<NpmPackageRepository[]>
+    {
+        public override bool HandleNull => false;
+
+        public override NpmPackageRepository[]? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType is JsonTokenType.StartArray)
+            {
+                reader.Read();
+                var result = new List<NpmPackageRepository>();
+                while (reader.TokenType != JsonTokenType.EndArray)
+                {
+                    var item = ReadSingleItem(ref reader);
+                    if (item != null)
+                    {
+                        result.Add(item);
+                    }
+
+                    if (reader.TokenType == JsonTokenType.EndObject)
+                    {
+                        reader.Read();
+                    }
+                }
+
+                return result.ToArray();
+            }
+
+            var value = ReadSingleItem(ref reader);
+            if (value != null)
+                return new[] { value };
+
+            throw new NotSupportedException($"Token {reader.TokenType} is not supported");
+        }
+
+        private static NpmPackageRepository? ReadSingleItem(ref Utf8JsonReader reader)
+        {
+            // Repository can be a string or an object
+            if (reader.TokenType is JsonTokenType.StartObject)
+            {
+                return JsonSerializer.Deserialize<NpmPackageRepository>(ref reader);
+            }
+
+            if (reader.TokenType is JsonTokenType.String)
+            {
+                var str = reader.GetString();
+                return new NpmPackageRepository() { Url = str! };
+            }
+
+            throw new NotSupportedException($"Token {reader.TokenType} is not supported");
+        }
+
+        public override void Write(Utf8JsonWriter writer, NpmPackageRepository[]? value, JsonSerializerOptions options)
+        {
+            throw new NotSupportedException();
+        }
+    }
+}
