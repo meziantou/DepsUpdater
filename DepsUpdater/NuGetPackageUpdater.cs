@@ -19,7 +19,7 @@ internal sealed class NuGetPackageUpdater : PackageUpdater
 
     public override async IAsyncEnumerable<string> GetVersionsAsync(string packageName, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var cache = new SourceCacheContext() { NoCache = true };
+        using var cache = new SourceCacheContext() { NoCache = true };
         var repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
 
         var resource = await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false);

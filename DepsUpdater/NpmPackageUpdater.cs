@@ -18,9 +18,9 @@ namespace DepsUpdater;
 
 internal sealed class NpmPackageUpdater : PackageUpdater
 {
-    private static readonly HttpClient s_httpClient = new();
-    private static readonly Uri s_registryUri = new("https://registry.npmjs.org");
-    private static readonly JsonSerializerOptions s_defaultJsonOptions = new() { Converters = { new NpmPackageRepositoryJsonConverter() } };
+    private static readonly HttpClient HttpClient = new();
+    private static readonly Uri RegistryUri = new("https://registry.npmjs.org");
+    private static readonly JsonSerializerOptions DefaultJsonOptions = new() { Converters = { new NpmPackageRepositoryJsonConverter() } };
 
     protected override bool IsSupported(Dependency dependency) => dependency.Type is DependencyType.Npm;
 
@@ -39,13 +39,13 @@ internal sealed class NpmPackageUpdater : PackageUpdater
 
     public override async IAsyncEnumerable<string> GetVersionsAsync(string packageName, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var packageUri = new Uri(s_registryUri, packageName);
-        using var packageResponse = await s_httpClient.GetAsync(packageUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        var packageUri = new Uri(RegistryUri, packageName);
+        using var packageResponse = await HttpClient.GetAsync(packageUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (packageResponse.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.BadRequest)
             yield break;
 
         packageResponse.EnsureSuccessStatusCode();
-        var package = await packageResponse.Content.ReadFromJsonAsync<NpmPackage>(options: s_defaultJsonOptions, cancellationToken);
+        var package = await packageResponse.Content.ReadFromJsonAsync<NpmPackage>(options: DefaultJsonOptions, cancellationToken);
         if (package is null)
             yield break;
 
