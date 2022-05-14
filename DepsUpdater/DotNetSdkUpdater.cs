@@ -12,12 +12,12 @@ namespace DepsUpdater;
 
 internal sealed class DotNetSdkUpdater : PackageUpdater
 {
-    private static readonly HttpClient s_httpClient = new();
+    private static readonly HttpClient HttpClient = new();
 
     public override async IAsyncEnumerable<string> GetVersionsAsync(string packageName, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         // Only get latest SDK
-        var index = await s_httpClient.GetFromJsonAsync<DotNetReleaseIndex>("https://raw.githubusercontent.com/dotnet/core/main/release-notes/releases-index.json", cancellationToken);
+        var index = await HttpClient.GetFromJsonAsync<DotNetReleaseIndex>("https://raw.githubusercontent.com/dotnet/core/main/release-notes/releases-index.json", cancellationToken);
         foreach (var release in index!.Releases!)
         {
             yield return release.LastestSdk!;
