@@ -56,8 +56,8 @@ internal sealed class NpmPackageUpdater : PackageUpdater
     public override async Task UpdateLockFileAsync(FullPath rootDirectory, IEnumerable<Dependency> updatedDependencies, CancellationToken cancellationToken)
     {
         var files = updatedDependencies
-            .Where(dep => dep.Type == DependencyType.Npm)
-            .Select(dep => FullPath.FromPath(dep.Location.FilePath))
+            .Where(dep => dep.Type == DependencyType.Npm && dep.VersionLocation != null)
+            .Select(dep => FullPath.FromPath(dep.VersionLocation!.FilePath))
             .Distinct()
             .ToArray();
 

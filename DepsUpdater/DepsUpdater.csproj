@@ -3,18 +3,25 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
-    <Version>1.0.11</Version>
+    <Version>1.0.12</Version>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>depsupdater</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Meziantou.Framework" Version="3.0.25" />
-    <PackageReference Include="Meziantou.Framework.DependencyScanning" Version="1.0.0-alpha.9" />
-    <PackageReference Include="Meziantou.Framework.FullPath" Version="1.0.9" />
+    <PackageReference Include="Meziantou.Framework" Version="3.0.35" />
+    <PackageReference Include="Meziantou.Framework.DependencyScanning" Version="1.0.0" />
+    <PackageReference Include="Meziantou.Framework.FullPath" Version="1.0.11" />
     <PackageReference Include="Meziantou.Framework.Globbing" Version="1.0.11" />
-    <PackageReference Include="NuGet.Protocol" Version="6.2.1" />
+    <PackageReference Include="NuGet.Protocol" Version="6.6.1" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta3.22114.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Meziantou.DotNet.CodingStandard" Version="1.0.62">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>

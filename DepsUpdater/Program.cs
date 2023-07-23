@@ -59,7 +59,7 @@ internal static class Program
         var dependencyTypes = dependencyType?.WhereNotNull().SelectMany(value => value.Split(new char[] { ',', ';', ' ' })).Select(Enum.Parse<DependencyType>).ToArray() ?? Array.Empty<DependencyType>();
         if (dependencyTypes.Length > 0)
         {
-            Console.WriteLine("Updating: " + string.Join(",", dependencyTypes));
+            Console.WriteLine("Updating: " + string.Join(',', dependencyTypes));
         }
 
         Console.WriteLine("Searching in:");
@@ -83,9 +83,9 @@ internal static class Program
             ShouldRecursePredicate = globs.IsPartialMatch,
         };
 
-        var dependencies = await DependencyScanner.ScanDirectoryAsync(directory, options, cancellationTokenSource.Token).ToListAsync(cancellationTokenSource.Token);
+        var dependencies = (await DependencyScanner.ScanDirectoryAsync(directory, options, cancellationTokenSource.Token)).ToList();
         Console.WriteLine($"{dependencies.Count} dependencies found");
-        foreach (var dependency in dependencies.OrderBy(dep => dep.Type).ThenBy(dep => dep.Name).ThenBy(dep => dep.Version))
+        foreach (var dependency in dependencies.OrderBy(dep => dep.Type).ThenBy(dep => dep.Name, StringComparer.Ordinal).ThenBy(dep => dep.Version, StringComparer.Ordinal))
         {
             Console.WriteLine("- " + dependency);
         }
@@ -99,7 +99,7 @@ internal static class Program
 
         var updatedDependencies = new ConcurrentBag<Dependency>();
         var parallelOptions = new ParallelOptions { CancellationToken = cancellationTokenSource.Token, MaxDegreeOfParallelism = 1 };
-        await Parallel.ForEachAsync(dependencies.Where(d => d.Location.IsUpdatable), parallelOptions, async (dependency, cancellationToken) =>
+        await Parallel.ForEachAsync(dependencies.Where(d => d.VersionLocation!.IsUpdatable), parallelOptions, async (dependency, cancellationToken) =>
         {
             if (dependencyTypes.Length > 0 && !dependencyTypes.Contains(dependency.Type))
                 return;

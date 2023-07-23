@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Meziantou.Framework;
@@ -11,7 +12,7 @@ internal abstract class PackageUpdater
 {
     public virtual async Task<string?> UpdateAsync(Dependency dependency, CancellationToken cancellationToken)
     {
-        if (!IsSupported(dependency))
+        if (dependency.Name == null || !IsSupported(dependency))
             return null;
 
         SemanticVersion? maxVersion = null;
@@ -35,7 +36,7 @@ internal abstract class PackageUpdater
         if (rawMaxVersion is null)
             return null;
 
-        await dependency.UpdateAsync(rawMaxVersion, cancellationToken).ConfigureAwait(false);
+        await dependency.UpdateVersionAsync(rawMaxVersion, cancellationToken).ConfigureAwait(false);
         return rawMaxVersion;
     }
 
