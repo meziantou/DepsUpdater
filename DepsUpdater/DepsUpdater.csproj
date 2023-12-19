@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
-    <Version>1.0.12</Version>
+    <Version>1.0.13</Version>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>depsupdater</ToolCommandName>
   </PropertyGroup>
@@ -13,7 +13,7 @@
     <PackageReference Include="Meziantou.Framework.DependencyScanning" Version="1.0.0" />
     <PackageReference Include="Meziantou.Framework.FullPath" Version="1.0.11" />
     <PackageReference Include="Meziantou.Framework.Globbing" Version="1.0.11" />
-    <PackageReference Include="NuGet.Protocol" Version="6.6.1" />
+    <PackageReference Include="NuGet.Protocol" Version="6.8.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta3.22114.1" />
   </ItemGroup>
 
