@@ -25,7 +25,7 @@ public sealed class FunctionalTests
             </Project>
             """);
 
-        var result = await Program.Main(new[] { "update", "--directory", tempDir.FullPath });
+        var result = await Program.Main(["update", "--directory", tempDir.FullPath]);
         Assert.Equal(0, result);
 
         var deps = await ScanDependencies(tempDir);
@@ -53,7 +53,7 @@ public sealed class FunctionalTests
             }
             """);
 
-        var result = await Program.Main(new[] { "update", "--directory", tempDir.FullPath, "--dependency-type", "Npm" });
+        var result = await Program.Main(["update", "--directory", tempDir.FullPath, "--dependency-type", "Npm"]);
         Assert.Equal(0, result);
 
         var deps = await ScanDependencies(tempDir);

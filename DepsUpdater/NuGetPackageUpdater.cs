@@ -32,7 +32,7 @@ internal sealed class NuGetPackageUpdater : PackageUpdater
 
     public override async Task UpdateLockFileAsync(FullPath rootDirectory, IEnumerable<Dependency> updatedDependencies, CancellationToken cancellationToken)
     {
-        if (!updatedDependencies.Any(dep => dep.Type == DependencyType.NuGet))
+        if (!updatedDependencies.Any(dep => dep.Type is DependencyType.NuGet))
             return;
 
         var lockFiles = Directory.GetFiles(rootDirectory, "packages.lock.json", SearchOption.AllDirectories).Select(FullPath.FromPath);
@@ -52,7 +52,7 @@ internal sealed class NuGetPackageUpdater : PackageUpdater
                     },
                 };
                 using var process = Process.Start(psi);
-                if (process != null)
+                if (process is not null)
                 {
                     await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
                 }

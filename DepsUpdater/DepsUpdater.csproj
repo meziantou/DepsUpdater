@@ -9,16 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Meziantou.Framework" Version="3.0.35" />
-    <PackageReference Include="Meziantou.Framework.DependencyScanning" Version="1.0.0" />
-    <PackageReference Include="Meziantou.Framework.FullPath" Version="1.0.11" />
-    <PackageReference Include="Meziantou.Framework.Globbing" Version="1.0.11" />
+    <PackageReference Include="Meziantou.Framework" Version="3.0.39" />
+    <PackageReference Include="Meziantou.Framework.DependencyScanning" Version="1.0.1" />
+    <PackageReference Include="Meziantou.Framework.FullPath" Version="1.0.12" />
+    <PackageReference Include="Meziantou.Framework.Globbing" Version="1.0.13" />
     <PackageReference Include="NuGet.Protocol" Version="6.8.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta3.22114.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Meziantou.DotNet.CodingStandard" Version="1.0.62">
+    <PackageReference Update="Meziantou.DotNet.CodingStandard" Version="1.0.102">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>

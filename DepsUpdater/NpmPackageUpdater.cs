@@ -29,9 +29,9 @@ internal sealed class NpmPackageUpdater : PackageUpdater
         if (value is null)
             return null;
 
-        if (value.Length > 0 && value[0] is '~' or '^')
+        if (value is ['~' or '^', .. var version])
         {
-            value = value[1..];
+            value = version;
         }
 
         return base.ParseVersion(value);
@@ -56,7 +56,7 @@ internal sealed class NpmPackageUpdater : PackageUpdater
     public override async Task UpdateLockFileAsync(FullPath rootDirectory, IEnumerable<Dependency> updatedDependencies, CancellationToken cancellationToken)
     {
         var files = updatedDependencies
-            .Where(dep => dep.Type == DependencyType.Npm && dep.VersionLocation != null)
+            .Where(dep => dep.Type is DependencyType.Npm && dep.VersionLocation is not null)
             .Select(dep => FullPath.FromPath(dep.VersionLocation!.FilePath))
             .Distinct()
             .ToArray();
@@ -81,7 +81,7 @@ internal sealed class NpmPackageUpdater : PackageUpdater
                     UseShellExecute = false,
                 };
                 var result = await psi.RunAsTaskAsync(cancellationToken);
-                if (result.ExitCode != 0)
+                if (result.ExitCode is not 0)
                 {
                     Console.WriteLine($"Unable to update lock file '{lockFile}':\n{result.Output}");
                 }
@@ -177,26 +177,26 @@ internal sealed class NpmPackageUpdater : PackageUpdater
             {
                 reader.Read();
                 var result = new List<NpmPackageRepository>();
-                while (reader.TokenType != JsonTokenType.EndArray)
+                while (reader.TokenType is not JsonTokenType.EndArray)
                 {
                     var item = ReadSingleItem(ref reader);
-                    if (item != null)
+                    if (item is not null)
                     {
                         result.Add(item);
                     }
 
-                    if (reader.TokenType == JsonTokenType.EndObject)
+                    if (reader.TokenType is JsonTokenType.EndObject)
                     {
                         reader.Read();
                     }
                 }
 
-                return result.ToArray();
+                return [.. result];
             }
 
             var value = ReadSingleItem(ref reader);
-            if (value != null)
-                return new[] { value };
+            if (value is not null)
+                return [value];
 
             throw new NotSupportedException($"Token {reader.TokenType} is not supported");
         }

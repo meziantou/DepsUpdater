@@ -28,7 +28,7 @@ internal static class Program
         {
             new Option<string>("--directory", description: "Root directory") { IsRequired = false },
             new Option<string[]>("--files", description: "Glob patterns to find files to update") { IsRequired = false },
-            new Option<string[]>("--dependency-type", description: string.Join(", ", new [] { nameof(DependencyType.NuGet), nameof(DependencyType.DotNetSdk), nameof(DependencyType.Npm) }))
+            new Option<string[]>("--dependency-type", description: string.Join(", ", [nameof(DependencyType.NuGet), nameof(DependencyType.DotNetSdk), nameof(DependencyType.Npm)]))
             {
                 IsRequired = false,
             },
@@ -44,7 +44,7 @@ internal static class Program
     private static async Task<int> Update(string? directory, string?[]? filePatterns, string?[]? dependencyType, bool updateLockFiles)
     {
         GlobCollection? globs = null;
-        if (filePatterns != null && filePatterns.Length > 0)
+        if (filePatterns is not null && filePatterns.Length > 0)
         {
             globs = new(filePatterns.WhereNotNull().Select(pattern => Glob.Parse(pattern, GlobOptions.IgnoreCase)).ToArray());
         }
@@ -56,7 +56,7 @@ internal static class Program
                 Glob.Parse("!**/.playwright/package/**/*", GlobOptions.None));
         }
 
-        var dependencyTypes = dependencyType?.WhereNotNull().SelectMany(value => value.Split(new char[] { ',', ';', ' ' })).Select(Enum.Parse<DependencyType>).ToArray() ?? Array.Empty<DependencyType>();
+        var dependencyTypes = dependencyType?.WhereNotNull().SelectMany(value => value.Split([',', ';', ' '])).Select(Enum.Parse<DependencyType>).ToArray() ?? [];
         if (dependencyTypes.Length > 0)
         {
             Console.WriteLine("Updating: " + string.Join(',', dependencyTypes));
@@ -108,11 +108,11 @@ internal static class Program
             foreach (var updater in updaters)
             {
                 updatedVersion = await updater.UpdateAsync(dependency, cancellationTokenSource.Token);
-                if (updatedVersion != null)
+                if (updatedVersion is not null)
                     break;
             }
 
-            if (updatedVersion != null)
+            if (updatedVersion is not null)
             {
                 Console.WriteLine($"Updated {dependency} -> {updatedVersion}");
                 updatedDependencies.Add(dependency);
